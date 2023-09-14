@@ -11,6 +11,8 @@
     <Description>A simple base64 image and qrcode generator</Description>
     <Authors>Renato Rocha</Authors>
     <PackageLicenseFile>GNUv2_License.txt</PackageLicenseFile>
+    <RepositoryUrl>https://github.com/rocha83/ImageGenerator</RepositoryUrl>
+    <RepositoryType>Git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
