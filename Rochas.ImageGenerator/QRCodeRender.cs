@@ -24,14 +24,14 @@ namespace Rochas.ImageGenerator
 
         #region Public Methods
 
-        public string GetQRCodeBase64Content(string textContent, int size = 240)
+        public string GetQRCodeBase64Content(string textContent, int pixels = 5)
         {
-            var qrCodeBitmap = RenderQRCodeBitmap(textContent, size);
+            var qrCodeBitmap = RenderQRCodeBitmap(textContent, pixels);
 
             return _imageRender.GetImageBase64Content(qrCodeBitmap);
         }
 
-        public string GetQRCodeBinaryContent(string textContent, int size = 240)
+        public string GetQRCodeBinaryContent(string textContent, int size = 5)
         {
             var qrCodeBitmap = RenderQRCodeBitmap(textContent, size);
 
@@ -52,12 +52,12 @@ namespace Rochas.ImageGenerator
 
         #region Helper Methods
 
-        private Bitmap RenderQRCodeBitmap(string textContent, int size)
+        private Bitmap RenderQRCodeBitmap(string textContent, int pixels = 5)
         {
             QRCodeGenerator qrGenerator = new QRCodeGenerator();
             QRCodeData qrCodeData = qrGenerator.CreateQrCode(textContent, QRCodeGenerator.ECCLevel.Q);
             QRCode qrCode = new QRCode(qrCodeData);
-            return qrCode.GetGraphic(size);
+            return qrCode.GetGraphic(pixels);
         }
 
         public void Dispose()
