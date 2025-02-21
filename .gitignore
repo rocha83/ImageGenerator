@@ -8,3 +8,10 @@
 /Rochas.ImageGenerator/bin/Release
 /.vs/Rochas.ImageGenerator/v17
 /Rochas.ImageGenerator/bin/Debug
+/.vs
+/packages
+/Rochas.ImageFilter/bin/Release/netstandard2.0
+/Rochas.ImageFilter/obj
+/Rochas.ImageLegacyFilter/bin/Release/netstandard2.1
+/Rochas.ImageLegacyFilter/obj/Release/netstandard2.1
+/Rochas.ImageLegacyFilter/obj
