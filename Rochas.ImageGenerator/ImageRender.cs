@@ -122,11 +122,45 @@ namespace Rochas.ImageGenerator
             return GetImageScaleResult(memStream, imageBytes, maxWidth);
         }
 
-        #endregion
+		public byte[] RenderWaterMarkedImage(byte[] imageContent, byte[] waterMarkContent, double percPosX, double percPosY)
+		{
+			if ((imageContent == null) || (waterMarkContent == null))
+				return null;
 
-        #region Image File Methods
-        
-        public void SaveBase64ImageFile(string filePath, string base64Image)
+			using var stream = new MemoryStream(imageContent);
+			var image = Image.FromStream(stream);
+
+			using var squareStream = new MemoryStream(waterMarkContent);
+			var square = Image.FromStream(squareStream);
+
+			var render = Graphics.FromImage(image);
+			render.DrawImage(square, Convert.ToInt32(image.Width * (percPosX / 100.0)),
+									 Convert.ToInt32(image.Height * (percPosY / 100.0)));
+
+			var result = new ImageConverter().ConvertTo(image, typeof(byte[])) as byte[];
+
+			return result;
+		}
+
+		public string RenderWaterMarkedImage(string base64ImageContent, string base64WaterMarkContent, int percPosX, int percPosY, int maxWidth = 0)
+		{
+			if (string.IsNullOrWhiteSpace(base64ImageContent)
+				|| string.IsNullOrWhiteSpace(base64WaterMarkContent))
+				return null;
+
+			var imageBinContent = Convert.FromBase64String(base64ImageContent);
+			var squareBinContent = Convert.FromBase64String(base64WaterMarkContent);
+
+			var preResult = RenderWaterMarkedImage(imageBinContent, squareBinContent, percPosX, percPosY);
+
+			return GetImageBase64Content(preResult, maxWidth);
+		}
+
+		#endregion
+
+		#region Image File Methods
+
+		public void SaveBase64ImageFile(string filePath, string base64Image)
         {
             var imageBytes = RenderBinaryImage(base64Image);
 
