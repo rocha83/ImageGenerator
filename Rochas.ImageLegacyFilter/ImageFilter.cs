@@ -66,5 +66,39 @@ namespace Rochas.ImageLegacyFilter
 								 srcWidthSlice, srcHeightSlice, level);
 			}
 		}
+
+		public byte[] RenderWaterMarkedImage(byte[] imageContent, byte[] waterMarkContent, double percPosX, double percPosY)
+		{
+			if ((imageContent == null) || (waterMarkContent == null))
+				return null;
+
+			using var stream = new MemoryStream(imageContent);
+			var image = Image.FromStream(stream);
+
+			using var squareStream = new MemoryStream(waterMarkContent);
+			var square = Image.FromStream(squareStream);
+
+			var render = Graphics.FromImage(image);
+			render.DrawImage(square, Convert.ToInt32(image.Width * (percPosX / 100.0)),
+									 Convert.ToInt32(image.Height * (percPosY / 100.0)));
+
+			var result = new ImageConverter().ConvertTo(image, typeof(byte[])) as byte[];
+
+			return result;
+		}
+
+		public string RenderWaterMarkedImage(string base64ImageContent, string base64WaterMarkContent, int percPosX, int percPosY)
+		{
+			if (string.IsNullOrWhiteSpace(base64ImageContent)
+				|| string.IsNullOrWhiteSpace(base64WaterMarkContent))
+				return null;
+
+			var imageBinContent = Convert.FromBase64String(base64ImageContent);
+			var squareBinContent = Convert.FromBase64String(base64WaterMarkContent);
+
+			var preResult = RenderWaterMarkedImage(imageBinContent, squareBinContent, percPosX, percPosY);
+
+			return Convert.ToBase64String(preResult);
+		}
 	}
 }
