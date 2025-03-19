@@ -10,7 +10,6 @@ using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Processing;
-using System.Text;
 
 namespace Rochas.ImageGenerator.Filters
 {
@@ -68,23 +67,23 @@ namespace Rochas.ImageGenerator.Filters
 		#region Public Methods
 		public byte[]? BlurImage(byte[] imageContent, int horizontalPosition, int verticalPosition, int width, int height, ImageFilterLevelEnum level)
 		{
-			using (var stream = new MemoryStream(imageContent))
-			{
-				var format = Image.DetectFormat(imageContent);
-				if (format == null)
-					throw new InvalidImageContentException("Invalid file format. Only accepts BMP, PNG, JPG, GIF and WEBP");
+			using var stream = new MemoryStream(imageContent);
+			var format = Image.DetectFormat(imageContent);
+			if (format == null)
+				throw new InvalidImageContentException("Invalid file format. Only accepts BMP, PNG, JPG, GIF and WEBP");
 
-				var image = Image.Load(stream, out format);
+			var multiplex = Convert.ToInt32(level);
+			var amount = ((float)level * 2) / (multiplex * 0.7F);
 
-				var rect = new Rectangle(horizontalPosition, verticalPosition, width, height);
+			var image = Image.Load(stream, out format);
+			var rect = new Rectangle(horizontalPosition, verticalPosition, width, height);
 
-				image.Mutate(img => img.GaussianBlur((float)level, rect));
+			image.Mutate(img => img.GaussianBlur(amount, rect));
 
-				var destinationStream = new MemoryStream();
-				image.Save(destinationStream, _imageEncoder);
+			var destinationStream = new MemoryStream();
+			image.Save(destinationStream, _imageEncoder);
 
-				return destinationStream?.ToArray();
-			}
+			return destinationStream?.ToArray();
 		}
 
 		public byte[]? BlurImage(byte[] imageContent, double horizontalPercent, double verticalPercent, ImageFilterLevelEnum level)
@@ -130,7 +129,7 @@ namespace Rochas.ImageGenerator.Filters
 			var coordinate = new Point(Convert.ToInt32(image.Width * (percPosX / 100.0)),
 									   Convert.ToInt32(image.Height * (percPosY / 100.0)));
 
-			image.Mutate(img => img.DrawImage(square, coordinate, 1));
+			image.Mutate(img => img.DrawImage(square, coordinate, 1F));
 
 			var destinationStream = new MemoryStream();
 			image.Save(destinationStream, _imageEncoder);
@@ -159,7 +158,7 @@ namespace Rochas.ImageGenerator.Filters
 			using (var stream = new MemoryStream(imageContent))
 			{
 				var format = Image.DetectFormat(imageContent);
-				if (format == null) 
+				if (format == null)
 					throw new InvalidImageContentException("Invalid file format. Only accepts BMP, PNG, JPG, GIF and WEBP");
 
 				var image = Image.Load(stream, out format);
