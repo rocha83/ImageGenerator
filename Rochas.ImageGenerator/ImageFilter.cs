@@ -10,6 +10,7 @@ using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Processing;
+using System.Text;
 
 namespace Rochas.ImageGenerator.Filters
 {
@@ -17,7 +18,8 @@ namespace Rochas.ImageGenerator.Filters
 	{
 		#region Declarations
 
-		private readonly IImageEncoder? _imageFormat;
+		private readonly IImageEncoder _imageEncoder;
+		private readonly IImageDecoder _imageDecoder;
 
 		#endregion
 
@@ -32,22 +34,31 @@ namespace Rochas.ImageGenerator.Filters
 			switch (imageFormat)
 			{
 				case ImageFormatEnum.Jpg:
-					_imageFormat = new JpegEncoder()
+					_imageEncoder = new JpegEncoder()
 					{
 						Quality = 90
 					};
+					_imageDecoder = new JpegDecoder();
 					break;
 				case ImageFormatEnum.Png:
-					_imageFormat = new PngEncoder() { };
+					_imageEncoder = new PngEncoder() { };
+					_imageDecoder = new PngDecoder();
 					break;
 				case ImageFormatEnum.Bmp:
-					_imageFormat = new BmpEncoder() { };
+					_imageEncoder = new BmpEncoder() { };
+					_imageDecoder = new BmpDecoder();
 					break;
 				case ImageFormatEnum.Gif:
-					_imageFormat = new GifEncoder() { };
+					_imageEncoder = new GifEncoder() { };
+					_imageDecoder = new GifDecoder();
 					break;
 				case ImageFormatEnum.WebP:
-					_imageFormat = new WebpEncoder() { };
+					_imageEncoder = new WebpEncoder() { };
+					_imageDecoder = new WebpDecoder();
+					break;
+				default:
+					_imageEncoder = new PngEncoder() { };
+					_imageDecoder = new PngDecoder();
 					break;
 			}
 		}
@@ -59,14 +70,14 @@ namespace Rochas.ImageGenerator.Filters
 		{
 			using (var stream = new MemoryStream(imageContent))
 			{
-				var image = Image.Load(stream);
+				var image = Image.Load(stream, _imageDecoder);
 
 				var rect = new Rectangle(horizontalPosition, verticalPosition, width, height);
 
 				image.Mutate(img => img.GaussianBlur((float)level, rect));
 
 				var destinationStream = new MemoryStream();
-				image.Save(destinationStream, _imageFormat);
+				image.Save(destinationStream, _imageEncoder);
 
 				return destinationStream?.ToArray();
 			}
@@ -79,7 +90,7 @@ namespace Rochas.ImageGenerator.Filters
 
 			using (var stream = new MemoryStream(imageContent))
 			{
-				var image = Image.Load(stream);
+				var image = Image.Load(stream, _imageDecoder);
 
 				var srcWidthSlice = Convert.ToInt32(image.Width * (horizontalPercent / 100));
 				var srcHeightSlice = Convert.ToInt32(image.Height * (verticalPercent / 100));
@@ -99,17 +110,17 @@ namespace Rochas.ImageGenerator.Filters
 				return null;
 
 			using var stream = new MemoryStream(imageContent);
-			var image = Image.Load(stream);
+			var image = Image.Load(stream, _imageDecoder);
 
 			using var squareStream = new MemoryStream(waterMarkContent);
-			var square = Image.Load(squareStream);
+			var square = Image.Load(squareStream, _imageDecoder);
 			var coordinate = new Point(Convert.ToInt32(image.Width * (percPosX / 100.0)),
 									   Convert.ToInt32(image.Height * (percPosY / 100.0)));
 
 			image.Mutate(img => img.DrawImage(square, coordinate, 1));
 
 			var destinationStream = new MemoryStream();
-			image.Save(destinationStream, _imageFormat);
+			image.Save(destinationStream, _imageEncoder);
 
 			return destinationStream?.ToArray();
 		}
@@ -134,7 +145,7 @@ namespace Rochas.ImageGenerator.Filters
 		{
 			using (var stream = new MemoryStream(imageContent))
 			{
-				var image = Image.Load(stream);
+				var image = Image.Load(stream, _imageDecoder);
 
 				float amount = 0;
 				if (level.HasValue)
@@ -164,7 +175,7 @@ namespace Rochas.ImageGenerator.Filters
 				}
 
 				var destinationStream = new MemoryStream();
-				image.Save(destinationStream, _imageFormat);
+				image.Save(destinationStream, _imageEncoder);
 
 				return destinationStream?.ToArray();
 			}

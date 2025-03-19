@@ -10,6 +10,7 @@ using SixLabors.ImageSharp.Formats.Bmp;
 using SixLabors.ImageSharp.Formats.Gif;
 using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Advanced;
 
 namespace Rochas.ImageGenerator
 {
@@ -17,7 +18,8 @@ namespace Rochas.ImageGenerator
 	{
 		#region Declarations
 
-		private readonly IImageEncoder? _imageFormat;
+		private readonly IImageEncoder? _imageEncoder;
+		private readonly IImageDecoder _imageDecoder;
 
 		#endregion
 
@@ -28,22 +30,33 @@ namespace Rochas.ImageGenerator
 			switch (imageFormat)
 			{
 				case ImageFormatEnum.Jpg:
-					_imageFormat = new JpegEncoder()
+					_imageEncoder = new JpegEncoder()
 					{
 						Quality = 90
 					};
+					_imageDecoder = new JpegDecoder() {
+						IgnoreMetadata = true
+					};
 					break;
 				case ImageFormatEnum.Png:
-					_imageFormat = new PngEncoder() { };
+					_imageEncoder = new PngEncoder() { };
+					_imageDecoder = new PngDecoder() { };
 					break;
 				case ImageFormatEnum.Bmp:
-					_imageFormat = new BmpEncoder() {};
+					_imageEncoder = new BmpEncoder() {};
+					_imageDecoder = new BmpDecoder() { };
 					break;
 				case ImageFormatEnum.Gif:
-					_imageFormat = new GifEncoder() { };
+					_imageEncoder = new GifEncoder() { };
+					_imageDecoder = new GifDecoder() { };
 					break;
 				case ImageFormatEnum.WebP:
-					_imageFormat = new WebpEncoder() { };
+					_imageEncoder = new WebpEncoder() { };
+					_imageDecoder = new WebpDecoder() { };
+					break;
+				default:
+					_imageEncoder = new PngEncoder() { };
+					_imageDecoder = new PngDecoder() { };
 					break;
 			}
 		}
@@ -73,7 +86,7 @@ namespace Rochas.ImageGenerator
 		public string GetImageBase64Content(Image imageBitmap)
 		{
 			using var memStream = new MemoryStream();
-			imageBitmap.Save(memStream, _imageFormat);
+			imageBitmap.Save(memStream, _imageEncoder);
 
 			var result = memStream.ToArray();
 
@@ -185,7 +198,7 @@ namespace Rochas.ImageGenerator
 		{
 			var image = ScaleImage(imageBytes, maxWidth);
 
-			image.SaveAsJpeg(memStream, new JpegEncoder() { Quality = 90 });
+			image.Save(memStream, _imageEncoder);
 
 			return memStream.ToArray();
 		}
@@ -193,8 +206,7 @@ namespace Rochas.ImageGenerator
 		private byte[] GetImageScaleResult(MemoryStream memStream, Stream imageStream, int maxWidth)
 		{
 			var image = ScaleImage(imageStream, maxWidth);
-
-			image.SaveAsJpeg(memStream, new JpegEncoder() { Quality = 90 });
+			image.Save(memStream, _imageEncoder);
 
 			return memStream.ToArray();
 		}
@@ -214,7 +226,8 @@ namespace Rochas.ImageGenerator
 		{
 			Image? result;
 
-			var image = Image.Load(imageStream);
+			var format = Image.DetectFormat(imageStream);
+			var image = Image.Load(imageStream, out format);
 
 			if ((maxWidth > 0) && (image.Width > maxWidth))
 			{
