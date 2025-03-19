@@ -227,6 +227,9 @@ namespace Rochas.ImageGenerator
 			Image? result;
 
 			var format = Image.DetectFormat(imageStream);
+			if (format == null)
+				throw new InvalidImageContentException("Invalid file format. Only accepts BMP, PNG, JPG, GIF and WEBP");
+
 			var image = Image.Load(imageStream, out format);
 
 			if ((maxWidth > 0) && (image.Width > maxWidth))

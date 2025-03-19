@@ -70,7 +70,11 @@ namespace Rochas.ImageGenerator.Filters
 		{
 			using (var stream = new MemoryStream(imageContent))
 			{
-				var image = Image.Load(stream, _imageDecoder);
+				var format = Image.DetectFormat(imageContent);
+				if (format == null)
+					throw new InvalidImageContentException("Invalid file format. Only accepts BMP, PNG, JPG, GIF and WEBP");
+
+				var image = Image.Load(stream, out format);
 
 				var rect = new Rectangle(horizontalPosition, verticalPosition, width, height);
 
@@ -90,7 +94,11 @@ namespace Rochas.ImageGenerator.Filters
 
 			using (var stream = new MemoryStream(imageContent))
 			{
-				var image = Image.Load(stream, _imageDecoder);
+				var format = Image.DetectFormat(imageContent);
+				if (format == null)
+					throw new InvalidImageContentException("Invalid file format. Only accepts BMP, PNG, JPG, GIF and WEBP");
+
+				var image = Image.Load(stream, out format);
 
 				var srcWidthSlice = Convert.ToInt32(image.Width * (horizontalPercent / 100));
 				var srcHeightSlice = Convert.ToInt32(image.Height * (verticalPercent / 100));
@@ -109,11 +117,16 @@ namespace Rochas.ImageGenerator.Filters
 			if ((imageContent == null) || (waterMarkContent == null))
 				return null;
 
+			var imageFormat = Image.DetectFormat(imageContent);
+			var markFormat = Image.DetectFormat(waterMarkContent);
+			if ((imageFormat == null) || (markFormat == null))
+				throw new InvalidImageContentException("Invalid file format. Only accepts BMP, PNG, JPG, GIF and WEBP");
+
 			using var stream = new MemoryStream(imageContent);
-			var image = Image.Load(stream, _imageDecoder);
+			var image = Image.Load(stream, out imageFormat);
 
 			using var squareStream = new MemoryStream(waterMarkContent);
-			var square = Image.Load(squareStream, _imageDecoder);
+			var square = Image.Load(squareStream, out markFormat);
 			var coordinate = new Point(Convert.ToInt32(image.Width * (percPosX / 100.0)),
 									   Convert.ToInt32(image.Height * (percPosY / 100.0)));
 
@@ -145,7 +158,11 @@ namespace Rochas.ImageGenerator.Filters
 		{
 			using (var stream = new MemoryStream(imageContent))
 			{
-				var image = Image.Load(stream, _imageDecoder);
+				var format = Image.DetectFormat(imageContent);
+				if (format == null) 
+					throw new InvalidImageContentException("Invalid file format. Only accepts BMP, PNG, JPG, GIF and WEBP");
+
+				var image = Image.Load(stream, out format);
 
 				float amount = 0;
 				if (level.HasValue)
