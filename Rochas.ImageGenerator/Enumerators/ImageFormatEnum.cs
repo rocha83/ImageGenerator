@@ -8,6 +8,8 @@ namespace Rochas.ImageGenerator.Enumerators
     {
         Jpg = 1,
         Png = 2,
-        Bmp = 3
+        Bmp = 3,
+        Gif = 4,
+        WebP = 5
     }
 }

@@ -2,6 +2,7 @@
 using System.Drawing;
 using QRCoder;
 using Rochas.ImageGenerator.Enumerators;
+using SixLabors.ImageSharp;
 
 namespace Rochas.ImageGenerator
 {
@@ -52,7 +53,7 @@ namespace Rochas.ImageGenerator
 
         #region Helper Methods
 
-        private Bitmap RenderQRCodeBitmap(string textContent, int pixels = 5)
+        private Image RenderQRCodeBitmap(string textContent, int pixels = 5)
         {
             QRCodeGenerator qrGenerator = new QRCodeGenerator();
             QRCodeData qrCodeData = qrGenerator.CreateQrCode(textContent, QRCodeGenerator.ECCLevel.Q);
