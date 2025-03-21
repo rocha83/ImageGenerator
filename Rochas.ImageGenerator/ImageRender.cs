@@ -10,255 +10,304 @@ using SixLabors.ImageSharp.Formats.Bmp;
 using SixLabors.ImageSharp.Formats.Gif;
 using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Formats;
-using SixLabors.ImageSharp.Advanced;
+using System.Threading.Tasks;
+using OpenGraphNet;
 
 namespace Rochas.ImageGenerator
 {
-	public class ImageRender : IDisposable
-	{
-		#region Declarations
-
-		private readonly IImageEncoder? _imageEncoder;
-		private readonly IImageDecoder _imageDecoder;
-
-		#endregion
-
-		#region Constructors
-
-		public ImageRender(ImageFormatEnum imageFormat)
-		{
-			switch (imageFormat)
-			{
-				case ImageFormatEnum.Jpg:
-					_imageEncoder = new JpegEncoder()
-					{
-						Quality = 90
-					};
-					_imageDecoder = new JpegDecoder() {
-						IgnoreMetadata = true
-					};
-					break;
-				case ImageFormatEnum.Png:
-					_imageEncoder = new PngEncoder() { };
-					_imageDecoder = new PngDecoder() { };
-					break;
-				case ImageFormatEnum.Bmp:
-					_imageEncoder = new BmpEncoder() {};
-					_imageDecoder = new BmpDecoder() { };
-					break;
-				case ImageFormatEnum.Gif:
-					_imageEncoder = new GifEncoder() { };
-					_imageDecoder = new GifDecoder() { };
-					break;
-				case ImageFormatEnum.WebP:
-					_imageEncoder = new WebpEncoder() { };
-					_imageDecoder = new WebpDecoder() { };
-					break;
-				default:
-					_imageEncoder = new PngEncoder() { };
-					_imageDecoder = new PngDecoder() { };
-					break;
-			}
-		}
-
-		#endregion
-
-		#region Public Methods
-
-		#region Base64 Image Methods
-
-		public string GetImageBase64Content(byte[] imageBytes, int maxWidth = 0)
-		{
-			using var memStream = new MemoryStream();
-			var result = GetImageScaleResult(memStream, imageBytes, maxWidth);
-
-			return RenderBase64Image(result);
-		}
+    public class ImageRender : IDisposable
+    {
+        #region Declarations
+
+        private readonly IImageEncoder? _imageEncoder;
+        private readonly IImageDecoder _imageDecoder;
+        private readonly string _userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                                             "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                                             "Chrome/134.0.0.0 Safari/537.36";
+
+        #endregion
+
+        #region Constructors
+
+        public ImageRender(ImageFormatEnum imageFormat)
+        {
+            switch (imageFormat)
+            {
+                case ImageFormatEnum.Jpg:
+                    _imageEncoder = new JpegEncoder()
+                    {
+                        Quality = 90
+                    };
+                    _imageDecoder = new JpegDecoder()
+                    {
+                        IgnoreMetadata = true
+                    };
+                    break;
+                case ImageFormatEnum.Png:
+                    _imageEncoder = new PngEncoder() { };
+                    _imageDecoder = new PngDecoder() { };
+                    break;
+                case ImageFormatEnum.Bmp:
+                    _imageEncoder = new BmpEncoder() { };
+                    _imageDecoder = new BmpDecoder() { };
+                    break;
+                case ImageFormatEnum.Gif:
+                    _imageEncoder = new GifEncoder() { };
+                    _imageDecoder = new GifDecoder() { };
+                    break;
+                case ImageFormatEnum.WebP:
+                    _imageEncoder = new WebpEncoder() { };
+                    _imageDecoder = new WebpDecoder() { };
+                    break;
+                default:
+                    _imageEncoder = new PngEncoder() { };
+                    _imageDecoder = new PngDecoder() { };
+                    break;
+            }
+        }
+
+        #endregion
+
+        #region Public Methods
+
+        #region Base64 Image Methods
+
+        public string GetImageBase64Content(byte[] imageBytes, int maxWidth = 0)
+        {
+            using var memStream = new MemoryStream();
+            var result = GetImageScaleResult(memStream, imageBytes, maxWidth);
+
+            return RenderBase64Image(result);
+        }
+
+        public string GetImageBase64Content(Stream imageStream, int maxWidth = 0)
+        {
+            using var memStream = new MemoryStream();
+            var result = GetImageScaleResult(memStream, imageStream, maxWidth);
+
+            return RenderBase64Image(result);
+        }
+
+        public string GetImageBase64Content(Image imageBitmap)
+        {
+            using var memStream = new MemoryStream();
+            imageBitmap.Save(memStream, _imageEncoder);
+
+            var result = memStream.ToArray();
+
+            return RenderBase64Image(result);
+        }
+
+        public async Task<string?> GetImageOnSiteHeaderBase64Content(string siteUrl, int maxWidth = 0)
+        {
+            var preResult = await OpenGraph.ParseUrlAsync(siteUrl);
+
+            if (preResult != null)
+            {
+                var imageUrl = preResult.Image?.AbsoluteUri;
+                if (!string.IsNullOrWhiteSpace(imageUrl))
+                {
+                    var result = await GetImageUrlBinaryContent(imageUrl, maxWidth);
+
+                    return RenderBase64Image(result);
+                }
+            }
+
+            return null;
+        }
+
+        public async Task<string> GetImageOnUrlBase64Content(string imageUrl, int maxWidth = 0)
+        {
+            var result = await GetImageUrlBinaryContent(imageUrl, maxWidth);
 
-		public string GetImageBase64Content(Stream imageStream, int maxWidth = 0)
-		{
-			using var memStream = new MemoryStream();
-			var result = GetImageScaleResult(memStream, imageStream, maxWidth);
-
-			return RenderBase64Image(result);
-		}
-
-		public string GetImageBase64Content(Image imageBitmap)
-		{
-			using var memStream = new MemoryStream();
-			imageBitmap.Save(memStream, _imageEncoder);
-
-			var result = memStream.ToArray();
-
-			return RenderBase64Image(result);
-		}
-
-		public string GetImageUrlBase64Content(string imageUrl, int maxWidth = 0)
-		{
-			var result = GetImageUrlBinaryContent(imageUrl, maxWidth);
-
-			return RenderBase64Image(result);
-		}
-
-		public string GetImageFileBase64Content(string filePath, int maxWidth = 0)
-		{
-			var result = GetImageFileBinaryContent(filePath, maxWidth);
+            return RenderBase64Image(result);
+        }
 
-			return RenderBase64Image(result);
-		}
+        public string GetImageOnUrlBase64ContentSync(string imageUrl, int maxWidth = 0)
+        {
+            var result = GetImageUrlBinaryContentSync(imageUrl, maxWidth);
 
-		#endregion
+            return RenderBase64Image(result);
+        }
 
-		#region Binary Image Methods
+        public string GetImageOnFileSystemBase64Content(string filePath, int maxWidth = 0)
+        {
+            var result = GetImageFileBinaryContent(filePath, maxWidth);
 
-		public byte[] GetImageBinaryContent(string base64Image, int maxWidth = 0)
-		{
-			var imageBytes = RenderBinaryImage(base64Image);
+            return RenderBase64Image(result);
+        }
 
-			using var memStream = new MemoryStream();
-			return GetImageScaleResult(memStream, imageBytes, maxWidth);
-		}
+        #endregion
 
-		public byte[] GetImageBinaryContent(Image imageBitmap)
-		{
-			using var memStream = new MemoryStream();
-			imageBitmap.Save(memStream, new JpegEncoder() { Quality = 90 });
+        #region Binary Image Methods
 
-			return memStream.ToArray();
-		}
+        public byte[] GetImageBinaryContent(string base64Image, int maxWidth = 0)
+        {
+            var imageBytes = RenderBinaryImage(base64Image);
 
-		public byte[] GetImageUrlBinaryContent(string imageUrl, int maxWidth = 0)
-		{
-			byte[]? result = null;
+            using var memStream = new MemoryStream();
+            return GetImageScaleResult(memStream, imageBytes, maxWidth);
+        }
 
-			using (var memStream = new MemoryStream())
-			{
-				using var webClient = new WebClient();
-				var imageBytes = webClient.DownloadData(imageUrl);
+        public byte[] GetImageBinaryContent(Image imageBitmap)
+        {
+            using var memStream = new MemoryStream();
+            imageBitmap.Save(memStream, new JpegEncoder() { Quality = 90 });
 
-				result = GetImageScaleResult(memStream, imageBytes, maxWidth);
-			}
+            return memStream.ToArray();
+        }
 
-			return result;
-		}
+        public async Task<byte[]> GetImageUrlBinaryContent(string imageUrl, int maxWidth = 0)
+        {
+            byte[]? result = null;
 
-		public byte[] GetImageFileBinaryContent(string filePath, int maxWidth = 0)
-		{
-			var imageBytes = GetImageFileContent(filePath);
+            using (var memStream = new MemoryStream())
+            {
+                using var webClient = new WebClient();
+                webClient.Headers.Add($"User-Agent", _userAgent);
+                
+                var imageBytes = await webClient.DownloadDataTaskAsync(imageUrl);
 
-			using var memStream = new MemoryStream();
-			return GetImageScaleResult(memStream, imageBytes, maxWidth);
-		}
+                result = GetImageScaleResult(memStream, imageBytes, maxWidth);
+            }
 
-		#endregion
+            return result;
+        }
 
-		#region Image File Methods
+        public byte[] GetImageUrlBinaryContentSync(string imageUrl, int maxWidth = 0)
+        {
+            byte[]? result = null;
 
-		public void SaveBase64ImageFile(string filePath, string base64Image)
-		{
-			var imageBytes = RenderBinaryImage(base64Image);
+            using (var memStream = new MemoryStream())
+            {
+                using var webClient = new WebClient();
+                webClient.Headers.Add($"User-Agent", _userAgent);
 
-			File.WriteAllBytes(filePath, imageBytes);
-		}
+                var imageBytes = webClient.DownloadData(imageUrl);
 
-		public void SaveBinaryImageFile(string filePath, byte[] imageBytes)
-		{
-			var base64Image = RenderBase64Image(imageBytes);
+                result = GetImageScaleResult(memStream, imageBytes, maxWidth);
+            }
 
-			File.WriteAllText(filePath, base64Image);
-		}
+            return result;
+        }
 
-		#endregion
+        public byte[] GetImageFileBinaryContent(string filePath, int maxWidth = 0)
+        {
+            var imageBytes = GetImageFileContent(filePath);
 
-		#endregion
+            using var memStream = new MemoryStream();
+            return GetImageScaleResult(memStream, imageBytes, maxWidth);
+        }
 
-		#region Helper Methods
+        #endregion
 
-		private string RenderBase64Image(byte[] imageContent)
-		{
-			return Convert.ToBase64String(imageContent);
-		}
+        #region Image File Methods
 
-		private byte[] RenderBinaryImage(string base64Content)
-		{
-			return Convert.FromBase64String(base64Content);
-		}
+        public void SaveBase64ImageFile(string filePath, string base64Image)
+        {
+            var imageBytes = RenderBinaryImage(base64Image);
 
-		private byte[] GetImageFileContent(string filePath)
-		{
-			using var memStream = new MemoryStream();
-			var fileStream = File.Open(filePath, FileMode.Open);
+            File.WriteAllBytes(filePath, imageBytes);
+        }
 
-			fileStream.CopyTo(memStream);
+        public void SaveBinaryImageFile(string filePath, byte[] imageBytes)
+        {
+            var base64Image = RenderBase64Image(imageBytes);
 
-			return memStream.ToArray();
-		}
+            File.WriteAllText(filePath, base64Image);
+        }
 
-		private byte[] GetImageScaleResult(MemoryStream memStream, byte[] imageBytes, int maxWidth)
-		{
-			var image = ScaleImage(imageBytes, maxWidth);
+        #endregion
 
-			image.Save(memStream, _imageEncoder);
+        #endregion
 
-			return memStream.ToArray();
-		}
+        #region Helper Methods
 
-		private byte[] GetImageScaleResult(MemoryStream memStream, Stream imageStream, int maxWidth)
-		{
-			var image = ScaleImage(imageStream, maxWidth);
-			image.Save(memStream, _imageEncoder);
+        private string RenderBase64Image(byte[] imageContent)
+        {
+            return Convert.ToBase64String(imageContent);
+        }
 
-			return memStream.ToArray();
-		}
+        private byte[] RenderBinaryImage(string base64Content)
+        {
+            return Convert.FromBase64String(base64Content);
+        }
 
-		private Image ScaleImage(byte[] imageBytes, int maxWidth)
-		{
-			Image? result;
+        private byte[] GetImageFileContent(string filePath)
+        {
+            using var memStream = new MemoryStream();
+            var fileStream = File.Open(filePath, FileMode.Open);
 
-			var imageStream = new MemoryStream(imageBytes);
+            fileStream.CopyTo(memStream);
 
-			result = ScaleImage(imageStream, maxWidth);
+            return memStream.ToArray();
+        }
 
-			return result;
-		}
+        private byte[] GetImageScaleResult(MemoryStream memStream, byte[] imageBytes, int maxWidth)
+        {
+            var image = ScaleImage(imageBytes, maxWidth);
 
-		private Image ScaleImage(Stream imageStream, int maxWidth)
-		{
-			Image? result;
+            image.Save(memStream, _imageEncoder);
 
-			var format = Image.DetectFormat(imageStream);
-			if (format == null)
-				throw new InvalidImageContentException("Invalid file format. Only accepts BMP, PNG, JPG, GIF and WEBP");
+            return memStream.ToArray();
+        }
 
-			var image = Image.Load(imageStream, out format);
+        private byte[] GetImageScaleResult(MemoryStream memStream, Stream imageStream, int maxWidth)
+        {
+            var image = ScaleImage(imageStream, maxWidth);
+            image.Save(memStream, _imageEncoder);
 
-			if ((maxWidth > 0) && (image.Width > maxWidth))
-			{
-				var imageWidth = double.Parse(image.Width.ToString());
-				var imageHeight = double.Parse(image.Height.ToString());
+            return memStream.ToArray();
+        }
 
-				var imageAspect = imageWidth / maxWidth;
-				var newWidth = (imageWidth / imageAspect);
-				var newHeight = (imageHeight / imageAspect);
+        private Image ScaleImage(byte[] imageBytes, int maxWidth)
+        {
+            Image? result;
 
-				var intWidth = int.Parse(Math.Round(newWidth, 0).ToString());
-				var intHeight = int.Parse(Math.Round(newHeight, 0).ToString());
+            var imageStream = new MemoryStream(imageBytes);
 
-				image.Mutate(img => img.Resize(intWidth, intHeight));
+            result = ScaleImage(imageStream, maxWidth);
 
-				return image;
-			}
-			else
-				result = image;
+            return result;
+        }
 
-			return result;
-		}
+        private Image ScaleImage(Stream imageStream, int maxWidth)
+        {
+            Image? result;
 
-		public void Dispose()
-		{
-			GC.ReRegisterForFinalize(this);
-		}
+            var format = Image.DetectFormat(imageStream);
+            if (format == null)
+                throw new InvalidImageContentException("Invalid file format. Only accepts BMP, PNG, JPG, GIF and WEBP");
 
-		#endregion
-	}
+            var image = Image.Load(imageStream, out format);
+
+            if ((maxWidth > 0) && (image.Width > maxWidth))
+            {
+                var imageWidth = double.Parse(image.Width.ToString());
+                var imageHeight = double.Parse(image.Height.ToString());
+
+                var imageAspect = imageWidth / maxWidth;
+                var newWidth = (imageWidth / imageAspect);
+                var newHeight = (imageHeight / imageAspect);
+
+                var intWidth = int.Parse(Math.Round(newWidth, 0).ToString());
+                var intHeight = int.Parse(Math.Round(newHeight, 0).ToString());
+
+                image.Mutate(img => img.Resize(intWidth, intHeight));
+
+                return image;
+            }
+            else
+                result = image;
+
+            return result;
+        }
+
+        public void Dispose()
+        {
+            GC.ReRegisterForFinalize(this);
+        }
+
+        #endregion
+    }
 }
