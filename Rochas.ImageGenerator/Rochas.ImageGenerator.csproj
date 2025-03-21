@@ -6,7 +6,7 @@
     <Version>1.0.6</Version>
     <Copyright>Renato Rocha</Copyright>
     <PackageIcon>base64-icon.jpg</PackageIcon>
-    <PackageTags>Image generator converter base64 binary jpeg png gif webp effects filters qrcode url disk file</PackageTags>
+    <PackageTags>Image generator converter base64 binary jpeg png gif webp effects filters qrcode url disk file opengraph</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Description>A simple base64 image and qrcode generator</Description>
     <Authors>Renato Rocha</Authors>
