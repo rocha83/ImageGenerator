@@ -36,7 +36,7 @@ namespace Rochas.ImageGenerator
                 case ImageFormatEnum.Jpg:
                     _imageEncoder = new JpegEncoder()
                     {
-                        Quality = 90
+                        Quality = 80
                     };
                     _imageDecoder = new JpegDecoder()
                     {

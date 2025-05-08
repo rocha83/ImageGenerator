@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Nullable>enable</Nullable>
-    <Version>1.0.6</Version>
+    <Version>1.0.7</Version>
     <Copyright>Renato Rocha</Copyright>
     <PackageIcon>base64-icon.jpg</PackageIcon>
     <PackageTags>Image generator converter base64 binary jpeg png gif webp effects filters qrcode url disk file opengraph</PackageTags>
