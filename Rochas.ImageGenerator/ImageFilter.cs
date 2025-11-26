@@ -62,10 +62,26 @@ namespace Rochas.ImageGenerator.Filters
 			}
 		}
 
-		#endregion
+        #endregion
 
-		#region Public Methods
-		public byte[]? BlurImage(byte[] imageContent, int horizontalPosition, int verticalPosition, int width, int height, ImageFilterLevelEnum level)
+        #region Public Methods
+
+        public byte[] AjustOpacity(byte[] imageContent, int opacityPercent)
+        {
+            float opacity = Math.Clamp(opacityPercent / 100f, 0f, 1f);
+
+            using var stream = new MemoryStream(imageContent);
+            var image = Image.Load(stream, out var imageFormat);
+
+            image.Mutate(ctx => ctx.DrawImage(image, new Point(0, 0), opacity));
+
+            using var destinationStream = new MemoryStream();
+            image.Save(destinationStream, imageFormat);
+
+            return destinationStream.ToArray();
+        }
+
+        public byte[]? BlurImage(byte[] imageContent, int horizontalPosition, int verticalPosition, int width, int height, ImageFilterLevelEnum level)
 		{
 			using var stream = new MemoryStream(imageContent);
 			var format = Image.DetectFormat(imageContent);
@@ -199,7 +215,7 @@ namespace Rochas.ImageGenerator.Filters
 
 		public void Dispose()
 		{
-			GC.ReRegisterForFinalize(this);
+			GC.SuppressFinalize(this);
 		}
 
 		#endregion

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Nullable>enable</Nullable>
-    <Version>1.0.8</Version>
+    <Version>1.1.0</Version>
     <Copyright>Renato Rocha</Copyright>
     <PackageIcon>base64-icon.jpg</PackageIcon>
     <PackageTags>Image generator converter base64 binary jpeg png gif webp effects filters qrcode url disk file opengraph</PackageTags>
@@ -13,12 +13,13 @@
     <PackageLicenseFile>GNUv2_License.txt</PackageLicenseFile>
     <RepositoryUrl>https://github.com/rocha83/ImageGenerator</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
+    <PackageReleaseNotes>Added image opacity adjustment</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="OpenGraph-Net" Version="4.0.1" />
     <PackageReference Include="QRCoder-ImageSharp" Version="0.10.0" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="2.1.11" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="2.1.13" />
     <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0" />
   </ItemGroup>
 
