@@ -68,27 +68,32 @@ namespace Rochas.ImageGenerator.Filters
 
         public byte[] AjustOpacity(byte[] imageContent, int opacityPercent)
         {
+            var format = Image.DetectFormat(imageContent);
+            if (format == null)
+                throw new InvalidImageContentException("Invalid file format. Only accepts BMP, PNG, JPG, GIF and WEBP");
+
             float opacity = Math.Clamp(opacityPercent / 100f, 0f, 1f);
 
             using var stream = new MemoryStream(imageContent);
             var image = Image.Load(stream, out var imageFormat);
 
-            image.Mutate(ctx => ctx.DrawImage(image, new Point(0, 0), opacity));
+            image.Mutate(ctx => ctx.Opacity(opacity));
 
             using var destinationStream = new MemoryStream();
-            image.Save(destinationStream, imageFormat);
+			image.Save(destinationStream, imageFormat);
 
             return destinationStream.ToArray();
         }
 
         public byte[]? BlurImage(byte[] imageContent, int horizontalPosition, int verticalPosition, int width, int height, ImageFilterLevelEnum level)
 		{
-			using var stream = new MemoryStream(imageContent);
 			var format = Image.DetectFormat(imageContent);
 			if (format == null)
 				throw new InvalidImageContentException("Invalid file format. Only accepts BMP, PNG, JPG, GIF and WEBP");
 
-			var multiplex = Convert.ToInt32(level);
+            using var stream = new MemoryStream(imageContent);
+
+            var multiplex = Convert.ToInt32(level);
 			var amount = ((float)level * 2) / (multiplex * 0.7F);
 
 			var image = Image.Load(stream, out format);
